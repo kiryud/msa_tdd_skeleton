@@ -10,3 +10,4 @@
 - [jira convention](./convention/jira_convention.md)
 - [pseudocode convention](./convention/pseudocode_convention.md)
 
+안녕하세요
