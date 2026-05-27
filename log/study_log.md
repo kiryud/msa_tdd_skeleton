@@ -66,3 +66,27 @@
 ## 13주차 - TDD (Test Driven Development)
 
 > spring boot에서의 TDD를 위한 test dir 활용하기
+
+## 14주차 - team project
+
+### mendetory
+
+- Jira 이슈 관리 도구 활용
+    - 이슈 구분
+        - project 설계
+        - 기능 구현
+        - TDD
+
+- TDD 적용
+    - 테스트 우선 개발
+    - 단위 테스트 필수
+
+- 시스템 아키텍쳐
+
+- 사용 기술 명시 및 설계 목적 작성
+    - 언어 / 라이브러리 / 프레임워크
+    - 데이터베이스
+    - api
+
+- Github에 code upload 불필요
+    - pseudo code를 주석을 활용해 작성
