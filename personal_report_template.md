@@ -13,6 +13,41 @@ TDD         (10점) :
 발표 및 리뷰 대응   (10점) : 
 ```
 
+### 적용 가능 기술
+
+- 협업 도구 관리 및 작성
+    - git / github (3w)
+        - 문서 작성 (log, 아키텍쳐 설명 등)
+    - Jira (11w)
+        - 기획 (epic 작성)
+    - AWS archetecture diagram (12w)
+        - MSA구조로 작성
+
+- 개발?
+    - 환경 설정
+        - docker / docker-compose (9w, 10w)
+    - Fromtend
+        - language
+        - library
+        - framework
+        - data 관리
+            - in-memory
+            - disk-base
+    - Backend
+        - language
+            - java/kotlin (2w)
+                - Coroutine (7w)
+        - library
+        - framework
+            - spring / spring boot (+a)
+                - TDD (13w)
+        - API (5w)
+        - DBMS (4w)
+            - rdbms
+            - nosql
+                - disk-base-database (mongoDB)
+                - in-memory (redis)
+
 ## 추가 점수 받기
 
 ### 가점 기준
