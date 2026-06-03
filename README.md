@@ -120,7 +120,7 @@
 |:---:|:---:|:---:|
 |김수연|null|null|
 |남궁연제|null|null|
-|최다울|null|null|
+|**최다울**|**[KAN-5] 아키텍처 설계 및 TDD 시나리오 수립**|**User-Service (로그인/회원가입)**|
 |김민상|null|null|
 |윤혁주|null|null|
 |장찬범|null|null|
