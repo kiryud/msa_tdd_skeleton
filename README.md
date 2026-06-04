@@ -82,8 +82,7 @@
 |name|task|micro service|
 |:---:|:---:|:---:|
 |김수연|null|null|
-|남궁연제|null|null|
-|최다울|null|null|
+|남궁연제|주문 서비스 pseudocode 및 TDD 시나리오 작성|Order Service (선착순 주문 처리)||최다울|null|null|
 |김민상|null|null|
 |윤혁주|null|null|
 |장찬범|null|null|
