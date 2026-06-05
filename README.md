@@ -115,7 +115,7 @@ main idea :
 |name|main task|micro service|idea|
 |:---:|:---:|:---:|:---:|
 |김수연|TDD 관리|null|독서실 공간 예약|
-|남궁연제|container 관리|null|null|
+|남궁연제|container 관리|order service|null|
 |김민상|TDD 관리|null|출결, 과제 관리 플랫폼|
 |최다울|예비군가서 자유 업무 할당됨|user service|타임딜 공동구매 플랫폼|
 |윤혁주|Jira 관리|null|Book Bridge|
