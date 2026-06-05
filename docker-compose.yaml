@@ -1,0 +1,108 @@
+version: '3' # Docker Compose 파일 버전
+
+services: # 실행할 컨테이너 서비스 목록
+
+    nginx: # 리버스 프록시 서버 - 외부 요청을 frontend/backend로 분배
+        image: nginx # 컨테이너 이미지 이름 (빌드 후 태그될 이름)
+        container_name: nginx # 실행될 컨테이너 이름
+        build: ./requirements/nginx # Dockerfile 위치
+        depends_on: # 아래 서비스들이 먼저 실행된 후에 nginx 시작
+            - backend
+            - frontend
+        restart: always # 컨테이너가 종료되면 항상 자동 재시작
+        ports:
+            - "443:443" # 호스트 443포트 → 컨테이너 443포트 (HTTPS)
+        volumes:
+            - static_volume:/var/www/static # 정적 파일 공유 볼륨 마운트
+        networks:
+            - intra # 내부 네트워크에 연결
+        env_file:
+            - .env # 환경변수 파일 로드
+
+    frontend: # 사용자 UI 서버 - 지도, 공구 리스트 화면 등
+        image: frontend
+        container_name: frontend
+        build: ./requirements/frontend
+        depends_on:
+            - backend # backend가 먼저 실행된 후 frontend 시작
+        restart: always
+        expose:
+            - "3000" # 내부 네트워크에만 3000포트 오픈 (외부 직접 접근 불가)
+        networks:
+            - intra
+        env_file:
+            - .env
+
+    backend: # API 서버 - 공구 방 생성, 선착순 처리, GraphQL 등
+        image: backend
+        container_name: backend
+        build: ./requirements/backend
+        depends_on:
+            - db # db가 먼저 실행된 후 backend 시작
+            - redis # redis가 먼저 실행된 후 backend 시작
+        restart: always
+        expose:
+            - "8000" # 내부 네트워크에만 8000포트 오픈
+        volumes:
+            - static_volume:/var/www/static # nginx와 정적 파일 공유
+        networks:
+            - intra
+        env_file:
+            - .env
+
+    db: # 데이터베이스 서버 - 유저, 공구 방, 주문 데이터 저장
+        image: db
+        container_name: db
+        build: ./requirements/db
+        restart: always
+        expose:
+            - "5432" # 내부 네트워크에만 5432포트 오픈 (PostgreSQL 기본 포트)
+        volumes:
+            - db_volume:/var/lib/postgresql/data # DB 데이터 영구 저장
+        networks:
+            - intra
+        env_file:
+            - .env
+
+    redis: # 캐시/큐 서버 - 마감 직전 대규모 트래픽 선착순 처리용
+        image: redis
+        container_name: redis
+        build: ./requirements/redis
+        restart: always
+        expose:
+            - "6379" # 내부 네트워크에만 6379포트 오픈 (Redis 기본 포트)
+        volumes:
+            - redis_volume:/data # Redis 데이터 영구 저장
+        networks:
+            - intra
+        env_file:
+            - .env
+
+networks:
+    intra: # 서비스들 간 내부 통신용 네트워크
+        driver: bridge # 브리지 방식 - 컨테이너끼리만 통신 가능
+
+volumes:
+    db_volume:
+        name: db_volume # 볼륨 이름
+        driver: local # 로컬 호스트 스토리지 사용
+        driver_opts:
+            type: none
+            device: /home/time_deal/volume/db # 호스트의 실제 저장 경로
+            o: bind # 호스트 경로를 그대로 마운트
+
+    redis_volume:
+        name: redis_volume
+        driver: local
+        driver_opts:
+            type: none
+            device: /home/time_deal/volume/redis # 호스트의 실제 저장 경로
+            o: bind
+
+    static_volume:
+        name: static_volume
+        driver: local
+        driver_opts:
+            type: none
+            device: /home/time_deal/volume/static # 호스트의 실제 저장 경로
+            o: bind # nginx와 backend가 같은 경로 공유
