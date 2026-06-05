@@ -84,6 +84,26 @@
 	- volume 설정
 	- network 설정
 
+- 마이크로 서비스 중 하나 작성
+	- jira에 에픽, 업무 추가
+	- 해당 서비스 의사코드 작성
+	- 해당 서비스 테스트 케이스 작성
+
+```md
+- user service
+	- jira에 user service 관련 할 일 목록 작성
+	- 해당 업무 분배
+	- 의사코드 작성
+		- 엔티티
+		- DTO
+		- service
+		- controller
+	- 테스트 코드 작성
+		- small
+		- mediun
+		- large
+```
+
 #### 팀원별 참여 내역
 
 |name|task|micro service|idea|
