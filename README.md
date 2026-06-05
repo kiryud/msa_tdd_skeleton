@@ -93,6 +93,7 @@
 - user service
 	- jira에 user service 관련 할 일 목록 작성
 	- 해당 업무 분배
+	- docker-compose.yml에 해당 서비스 컨테이너 추가
 	- 의사코드 작성
 		- 엔티티
 		- DTO
@@ -106,10 +107,10 @@
 
 #### 팀원별 참여 내역
 
-|name|task|micro service|idea|
+|name|main task|micro service|idea|
 |:---:|:---:|:---:|:---:|
 |김수연|null|null|독서실 공간 예약|
-|남궁연제|null|null|null|
+|남궁연제|container 관리|null|null|
 |김민상|null|null|출결, 과제 관리 플랫폼|
 |최다울|null|null|타임딜 공동구매 플랫폼|
 |윤혁주|null|null|Book Bridge|
