@@ -81,13 +81,14 @@
 
 |name|task|micro service|idea|
 |:---:|:---:|:---:|:---:|
-|김수연|null|null|null|
+|김수연|null|null|독서실 공간 예약|
 |남궁연제|null|null|null|
 |김민상|null|null|null|
-|윤혁주|null|null|null|
-|장찬범|null|null|null|
-|추형우|null|null|null|
-|이효원|null|null|null|
+|최다울|null|null|타임딜 공동구매 플랫폼|
+|윤혁주|null|null|Book Bridge|
+|장찬범|null|null|PayMap|
+|추형우|null|null|WaitQ|
+|이효원|null|null|medi care|
 
 
 ## 문제 상황 및 해결 내용
