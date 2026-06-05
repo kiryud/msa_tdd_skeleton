@@ -2,6 +2,8 @@
 
 ```
 1조
+
+main idea : 
 ```
 
 ## 기획 문서
@@ -74,6 +76,9 @@
 - TDD
 - DBMS
 
+
+
+
 #### 팀장
 - 정진석
 
@@ -109,13 +114,13 @@
 
 |name|main task|micro service|idea|
 |:---:|:---:|:---:|:---:|
-|김수연|null|null|독서실 공간 예약|
+|김수연|TDD 관리|null|독서실 공간 예약|
 |남궁연제|container 관리|null|null|
-|김민상|null|null|출결, 과제 관리 플랫폼|
-|최다울|null|null|타임딜 공동구매 플랫폼|
-|윤혁주|null|null|Book Bridge|
+|김민상|TDD 관리|null|출결, 과제 관리 플랫폼|
+|최다울|예비군가서 자유 업무 할당됨|user service|타임딜 공동구매 플랫폼|
+|윤혁주|Jira 관리|null|Book Bridge|
 |장찬범|null|null|PayMap|
-|추형우|null|null|WaitQ|
+|추형우|TDD 관리|null|WaitQ|
 |이효원|null|null|medi care|
 
 
