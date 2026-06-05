@@ -3,7 +3,7 @@
 ```
 1조
 
-main idea : 
+main idea : 타임딜 공동구매 플랫폼
 ```
 
 ## 기획 문서
@@ -16,7 +16,21 @@ main idea :
 
 
 ## 시스템 아키텍쳐
+
+> 타임딜 공동구매 플랫폼
+
+- aws 다이어그램 가져올 곳
+
 ### 구조 설계
+
+- micro service
+
+```md
+- user service : 다올
+- 
+
+```
+
 ### 기술별 사용 이유 작성
 
 ## 역할 분담 내용
@@ -116,12 +130,12 @@ main idea :
 |:---:|:---:|:---:|:---:|
 |김수연|TDD 관리|null|독서실 공간 예약|
 |남궁연제|container 관리|null|null|
-|김민상|TDD 관리|null|출결, 과제 관리 플랫폼|
+|김민상|AWS 다이어그램 작성|null|출결, 과제 관리 플랫폼|
 |최다울|예비군가서 자유 업무 할당됨|user service|타임딜 공동구매 플랫폼|
 |윤혁주|Jira 관리|null|Book Bridge|
-|장찬범|null|null|PayMap|
+|장찬범|Jira 관리|null|PayMap|
 |추형우|TDD 관리|null|WaitQ|
-|이효원|null|null|medi care|
+|이효원|발표 자료 제작|null|medi care|
 
 
 ## 문제 상황 및 해결 내용
