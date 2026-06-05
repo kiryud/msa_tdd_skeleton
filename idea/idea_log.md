@@ -210,3 +210,96 @@ User(인증) · Store(매장조회·GraphQL) · Queue(대기·순번) · Locatio
 | | **팀원 G** | 코드 품질 기여 / 트러블슈팅 | 비즈니스 로직 경계값 테스트 오류 분석 및 Jira 예외 처리(Troubleshooting) 문서화 |
 | **Presentation & QA** | **팀원 H** | 발표 자료 제작 / 문서 기여 | Jira 이슈 추적 이력 시각화 및 프로젝트 산출물 PPT 제작 |
 | | **팀원 I** | 발표자 (Presenter) | 프로젝트 핵심 설계 목적 스피치, 질의응답 및 리뷰 대응 전담 |
+
+-----------------------------------------------------------------------------------------------------------------------------------
+
+5번째 아이디어
+
+시스템 아키텍쳐
+구조 설계
+본 프로젝트는 확장성과 서비스 간 독립성을 극대화하기 위해 Microservice Architecture (MSA)를 채택합니다. 전체 시스템은 API Gateway를 통해 클라이언트의 요청을 라우팅하며, 각 마이크로서비스는 독립된 데이터베이스를 가집니다. 서비스 간 비동기 데이터 동기화 및 이벤트 처리를 위해 Message Broker를 배치합니다.
+기술별 사용 이유 작성
+Spring Boot & Spring Cloud
+
+이유: 자바 생태계에서 MSA 구축을 위한 표준적인 프레임워크입니다. Spring Cloud Gateway를 통해 라우팅 및 인증을 일원화하고, Eureka 등을 통해 서비스 디스커버리를 손쉽게 구현할 수 있어 선택했습니다.
+
+Kafka (또는 RabbitMQ)
+
+이유: "예약 완료"라는 이벤트가 발생했을 때, 좌석 상태를 변경하고 알림을 보내는 과정에서 서비스 간 강한 결합을 피하기 위함입니다. 비동기 메시징을 통해 하나의 서비스가 장애가 나도 전체 시스템이 마비되지 않는 느슨한 결합(Loose Coupling)을 달성합니다.
+
+Redis
+
+이유: 열람실 예약 시스템 특성상 실시간 좌석 조회 및 선점(Locking) 요청이 몰리는 도어락/티케팅성 트래픽이 발생합니다. 디스크 기반 DB 대신 인메모리 DB인 Redis를 활용해 초당 수만 건의 잔여 좌석 조회 요청을 빠르게 처리하고, 분산 락(Distributed Lock)을 통해 중복 예약을 방지합니다.
+
+PostgreSQL & MySQL
+
+이유: 결제 및 예약 이력처럼 ACID 트랜잭션이 엄격하게 보장되어야 하는 데이터는 관계형 데이터베이스(RDBMS)를 사용합니다. 서비스별로 DB를 격리(Database-per-service)하여 데이터 의존성을 제거합니다.
+
+역할 분담 내용
+할 수 있는 일 정리
+협업 도구 활용
+git: 각자 담당한 Micro Service 폴더 구조를 생성하고, 공부한 핵심 개념(TDD 작성법, JPA 활용 등)을 docs/에 정리하여 PR(Pull Request) 중심의 기록 기반 공유를 실천합니다.
+
+jira: 팀장이 생성한 대단위 Epic(예: 회원 관리, 예약 흐름, 실시간 좌석 제어) 하위에 본인이 담당한 마이크로서비스의 기능별 스토리를 직접 작성하고 스프린트를 관리합니다.
+
+AWS architecture diagram: 서비스 개발 고도화 단계에서 ECS, RDS, ElastiCache, MSK 등을 배치한 클라우드 인프라 아키텍처 다이어그램을 도식화합니다.
+
+
+어떤 서비스를 할 것인가
+
+존재하는 서비스: 독서실/스터디카페 예약 앱(초심, 작심 등), 대학교 도서관 열람실 예약 시스템
+
+겪은 불편함: 시험 기간만 되면 서버가 터져서 예약이 안 됨, 내가 원하는 자리가 지금 비어있는지 실시간 확인이 어려움, 예약해두고 안 오는 '노쇼(No-Show)' 패널티 제어가 부족함.
+
+원하는 기능: 스마트폰으로 실시간 좌석 배치를 확인하고, 1분 안에 예약 및 입실 체크(QR코드 등)를 완료하는 매끄러운 경험.
+
+해당 서비스를 위해서 어떤 일을 해야하는가 (예약 서비스 기준 예시)
+
+요청/정보: 유저 ID, 이용하고자 하는 공간/좌석 ID, 시작 시간 및 이용 시간
+
+찾아야 할 데이터: 해당 시간에 해당 좌석이 이미 예약되어 있는지 여부 (Seat/Space Service에 조회 요청)
+
+데이터 가공: 예약 가능 여부 검증 후 Status: PENDING 상태의 예약 데이터 생성
+
+응답 정보: 예약 성공 여부, 예약 번호, 만료 예정 시간 (결제 유효 시간)
+
+비공개 정보: 다른 유저의 개인정보, 내부 DB 시퀀스 PK 등은 해싱하거나 응답에서 제외
+
+API를 구현하기 위해선 어떻게 해야할까?
+
+HTTP / REST API: URL은 자원(Resource)을 명시하고(예: /api/v1/reservations), 행위는 HTTP Method(POST, GET, DELETE)로 표현하는 규칙을 준수하여 작성합니다.
+
+Spring Boot 적용: @RestController, @PostMapping 어노테이션을 활용해 엔드포인트를 열고, DTO를 통해 요청과 응답을 규격화합니다.
+
+TDD를 해보려고 노력한다면 어떻게 해야할까?
+
+만들어야 할 Test: "동일한 좌석에 동시에 2명이 예약을 요청했을 때 1명만 성공해야 한다"와 같은 동시성 테스트 및 비즈니스 로직 검증 테스트.
+
+테스트 크기 기준:
+
+Small (Unit Test): 외부 인프라(DB) 없이 Mockito를 활용해 서비스 로직만 1초 내로 빠르게 검증.
+
+Medium (Integration Test): @SpringBootTest를 활용해 H2 인메모리 DB와 연동하여 레포지토리 레이어까지 검증.
+
+Large (E2E Test): Gateway부터 실제 DB, 메세지 브로커까지 전체 프로세스를 구동하여 검증.
+
+GraphQL
+
+역할: 대시보드나 메인 화면처럼 '유저 정보 + 당일 예약 현황 + 잔여 좌석 수' 등 여러 마이크로서비스의 데이터를 한 번에 묶어서 화면에 뿌려주어야 할 때, REST API의 Overfetching/Underfetching 문제를 해결하고 API Gateway 단에서 BFF(Backend For Frontend) 형태로 결합도를 낮추는 역할을 수행할 수 있습니다.
+
+어떤 DBMS를 쓸까?
+
+RDBMS (PostgreSQL/MySQL): 데이터 정합성이 중요한 회원, 예약, 결제 서비스에 사용.
+
+NoSQL (Redis): 실시간 좌석 상태 캐싱 및 분산 락 구현에 사용.
+
+Server
+container, container orchestration: Docker, Kubernetes (또는 AWS ECS)
+
+lang / lib / framework: Java 17, Spring Boot 3.x, Spring Cloud
+
+API: REST API, GraphQL (Gateway Aggregation용)
+
+TDD: JUnit5, Mockito, AssertJ
+
+DBMS: MySQL, PostgreSQL, Redis
