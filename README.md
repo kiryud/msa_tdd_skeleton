@@ -2,6 +2,8 @@
 
 ```
 1조
+
+main idea : 타임딜 공동구매 플랫폼
 ```
 
 ## 기획 문서
@@ -14,7 +16,21 @@
 
 
 ## 시스템 아키텍쳐
+
+> 타임딜 공동구매 플랫폼
+
+- aws 다이어그램 가져올 곳
+
 ### 구조 설계
+
+- micro service
+
+```md
+- user service : 다올
+- 
+
+```
+
 ### 기술별 사용 이유 작성
 
 ## 역할 분담 내용
@@ -74,21 +90,52 @@
 - TDD
 - DBMS
 
+
+
+
 #### 팀장
 - 정진석
 
+#### 팀원별 참여 가능 업무
+
+- docker
+	- docker-compose.yml 작성법 정리
+	- volume 설정
+	- network 설정
+
+- 마이크로 서비스 중 하나 작성
+	- jira에 에픽, 업무 추가
+	- 해당 서비스 의사코드 작성
+	- 해당 서비스 테스트 케이스 작성
+
+```md
+- user service
+	- jira에 user service 관련 할 일 목록 작성
+	- 해당 업무 분배
+	- docker-compose.yml에 해당 서비스 컨테이너 추가
+	- 의사코드 작성
+		- 엔티티
+		- DTO
+		- service
+		- controller
+	- 테스트 코드 작성
+		- small
+		- mediun
+		- large
+```
+
 #### 팀원별 참여 내역
 
-|name|task|micro service|
-|:---:|:---:|:---:|
-|김수연|null|null|
-|남궁연제|주문 서비스 pseudocode 및 TDD 시나리오 작성|Order Service (선착순 주문 처리)|
-|최다울|null|null|
-|김민상|null|null|
-|윤혁주|null|null|
-|장찬범|null|null|
-|추형우|null|null|
-|이효원|null|null|
+|name|main task|micro service|idea|
+|:---:|:---:|:---:|:---:|
+|김수연|TDD 관리|null|독서실 공간 예약|
+|남궁연제|container 관리|order service|null|
+|김민상|AWS 다이어그램 작성|time deal|출결, 과제 관리 플랫폼|
+|최다울|예비군가서 자유 업무 할당됨|user service|타임딜 공동구매 플랫폼|
+|윤혁주|Jira 관리|null|Book Bridge|
+|장찬범|Jira 관리|null|PayMap|
+|추형우|TDD 관리|null|WaitQ|
+|이효원|발표 자료 제작|null|medi care|
 
 
 ## 문제 상황 및 해결 내용
