@@ -79,15 +79,15 @@
 
 #### 팀원별 참여 내역
 
-|name|task|micro service|
-|:---:|:---:|:---:|
-|김수연|null|null|
-|남궁연제|null|null|
-|김민상|null|null|
-|윤혁주|null|null|
-|장찬범|null|null|
-|추형우|null|null|
-|이효원|null|null|
+|name|task|micro service|idea|
+|:---:|:---:|:---:|:---:|
+|김수연|null|null|null|
+|남궁연제|null|null|null|
+|김민상|null|null|null|
+|윤혁주|null|null|null|
+|장찬범|null|null|null|
+|추형우|null|null|null|
+|이효원|null|null|null|
 
 
 ## 문제 상황 및 해결 내용
