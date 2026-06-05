@@ -77,13 +77,20 @@
 #### 팀장
 - 정진석
 
+#### 팀원별 참여 가능 업무
+
+- docker
+	- docker-compose.yml 작성법 정리
+	- volume 설정
+	- network 설정
+
 #### 팀원별 참여 내역
 
 |name|task|micro service|idea|
 |:---:|:---:|:---:|:---:|
 |김수연|null|null|독서실 공간 예약|
 |남궁연제|null|null|null|
-|김민상|null|null|null|
+|김민상|null|null|출결, 과제 관리 플랫폼|
 |최다울|null|null|타임딜 공동구매 플랫폼|
 |윤혁주|null|null|Book Bridge|
 |장찬범|null|null|PayMap|
