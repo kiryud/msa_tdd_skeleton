@@ -118,3 +118,84 @@ Given : orderId=999 (존재하지 않음)
 When  : 주문 취소 요청
 Then  : 예외 발생 - "주문을 찾을 수 없습니다"
 ```
+
+---
+
+## 최소 주문 수량 제한
+
+### TC-S-13: 최소 수량 미달 주문 (공동구매)
+```
+Given : dealId=1, minQuantity=5, maxQuantity=null
+        재고 10개, userId=1, quantity=3
+When  : 주문 생성 요청
+Then  : 예외 발생 - "최소 주문 수량은 5개 이상이어야 합니다"
+        Redis DECRBY 호출 안 됨
+        주문 저장 안 됨
+```
+
+### TC-S-14: 최소 수량 정확히 충족 (경계값)
+```
+Given : dealId=1, minQuantity=5, maxQuantity=null
+        재고 10개, userId=1, quantity=5
+When  : 주문 생성 요청
+Then  : 정상 처리 - 주문 CONFIRMED
+        Redis 재고 5로 감소
+```
+
+### TC-S-15: 최소 수량 제한 없는 딜 (minQuantity=null)
+```
+Given : dealId=1, minQuantity=null, maxQuantity=null
+        재고 10개, userId=1, quantity=1
+When  : 주문 생성 요청
+Then  : 정상 처리 - 주문 CONFIRMED (최소 수량 검증 스킵)
+```
+
+---
+
+## 최대 주문 수량 제한
+
+### TC-S-16: 최대 수량 초과 주문 (타임딜)
+```
+Given : dealId=1, minQuantity=1, maxQuantity=3
+        재고 10개, userId=1, quantity=5
+When  : 주문 생성 요청
+Then  : 예외 발생 - "최대 주문 수량은 3개 이하이어야 합니다"
+        Redis DECRBY 호출 안 됨
+        주문 저장 안 됨
+```
+
+### TC-S-17: 최대 수량 정확히 충족 (경계값)
+```
+Given : dealId=1, minQuantity=1, maxQuantity=3
+        재고 10개, userId=1, quantity=3
+When  : 주문 생성 요청
+Then  : 정상 처리 - 주문 CONFIRMED
+        Redis 재고 7로 감소
+```
+
+### TC-S-18: 최대 수량 1개 제한 딜에서 2개 주문 (핫딜)
+```
+Given : dealId=1, minQuantity=1, maxQuantity=1
+        재고 10개, userId=1, quantity=2
+When  : 주문 생성 요청
+Then  : 예외 발생 - "최대 주문 수량은 1개 이하이어야 합니다"
+        Redis DECRBY 호출 안 됨
+```
+
+### TC-S-19: 최소·최대 동시 위반 (최소 검증이 먼저)
+```
+Given : dealId=1, minQuantity=3, maxQuantity=5
+        재고 10개, userId=1, quantity=1
+When  : 주문 생성 요청
+Then  : 예외 발생 - "최소 주문 수량은 3개 이상이어야 합니다"  (최소 검증 우선)
+        Redis DECRBY 호출 안 됨
+```
+
+### TC-S-20: 수량 제한 범위 내 정상 주문 (min·max 모두 설정)
+```
+Given : dealId=1, minQuantity=2, maxQuantity=5
+        재고 10개, userId=1, quantity=3
+When  : 주문 생성 요청
+Then  : 정상 처리 - 주문 CONFIRMED
+        Redis 재고 7로 감소
+```

@@ -58,3 +58,50 @@ Then  : 성공 응답 1건만
         MySQL CONFIRMED 주문 userId=1 건수 = 1건
         Redis 재고 = 7 (quantity=3 차감)
 ```
+
+---
+
+## 동시성 - 수량 제한 정합성
+
+### TC-L-05: 최대 수량 제한 딜에서 100명 동시 주문, 한도 초과 요청 혼재
+```
+Given : dealId=1 (maxQuantity=2), Redis 재고 50
+        userId 100명 준비
+        50명은 quantity=2 (한도 내), 50명은 quantity=3 (한도 초과)
+
+When  : 100개 요청 동시 발생
+
+Then  : quantity=3 요청 50건 → 전부 400 (최대 수량 초과)
+        quantity=2 요청 50건 → 재고 50 ÷ 2 = 25명 성공(200), 25명 재고부족(409)
+        Redis 최종 재고 = 0
+        MySQL CONFIRMED 주문 = 25건
+        재고 음수 발생 없음
+```
+
+### TC-L-06: 최소 수량 제한 딜에서 100명 동시 주문, 미달 요청 혼재
+```
+Given : dealId=1 (minQuantity=3), Redis 재고 100
+        userId 100명 준비
+        50명은 quantity=3 (한도 내), 50명은 quantity=1 (한도 미달)
+
+When  : 100개 요청 동시 발생
+
+Then  : quantity=1 요청 50건 → 전부 400 (최소 수량 미달)
+        quantity=3 요청 50건 → 전부 200 (재고 150 필요, 재고 100 → 33명 성공, 17명 재고부족)
+        Redis 최종 재고 = 100 - (33 × 3) = 1
+        재고 음수 발생 없음
+        수량 제한 검증은 Redis DECRBY 이전에 처리되어 불필요한 롤백 없음
+```
+
+### TC-L-07: 수량 제한 캐시(Redis) 동시 miss → DB 중복 조회 후 캐시 워밍
+```
+Given : dealId=1 (minQuantity=2, maxQuantity=5), Redis 수량 제한 캐시 없음
+        Redis 재고 100, userId 20명, quantity=3
+
+When  : 20개 요청 동시 발생 (캐시 cold start)
+
+Then  : 모든 요청 정상 처리 - 20건 200
+        DB 수량 제한 조회가 race 없이 처리됨 (중복 조회 허용, 결과 동일)
+        처리 완료 후 Redis 수량 제한 캐시 적재됨
+        Redis 최종 재고 = 40
+```
