@@ -134,7 +134,7 @@ main idea : 타임딜 공동구매 플랫폼
 |최다울|예비군가서 자유 업무 할당됨|user service|타임딜 공동구매 플랫폼|
 |윤혁주|Jira 관리|null|Book Bridge|
 |장찬범|Jira 관리|null|PayMap|
-|추형우|TDD 관리|null|WaitQ|
+|추형우|TDD 관리|deal creation|WaitQ|
 |이효원|발표 자료 제작|null|medi care|
 
 
