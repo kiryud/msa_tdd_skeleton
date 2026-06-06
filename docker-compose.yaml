@@ -1,0 +1,301 @@
+# ====================================================================================
+# Docker Compose - 우리 동네 타임딜 공동구매 플랫폼
+# ====================================================================================
+# ====================================================================================
+# SERVICES
+# ====================================================================================
+services:
+    # ----------------------------------------------------------------------------------
+    # ■ INFRA - 인프라 (DB / Cache / Proxy)
+    # ----------------------------------------------------------------------------------
+
+    # NGINX - 리버스 프록시
+    nginx:
+        image: nginx
+        container_name: nginx
+        build: ./requirements/nginx
+        depends_on:
+            - backend
+            - frontend
+            - order
+            - notification
+            - timedeal
+            - creation
+            - catalog
+            - user
+        restart: always
+        ports:
+            - "443:443"                             # 호스트 443 → 컨테이너 443 (HTTPS)
+        volumes:
+            - static_volume:/var/www/static
+        networks:
+            - intra
+        env_file:
+            - .env
+
+    # PostgreSQL - 메인 DB (backend / catalog / creation / integration / timedeal / user)
+    db:
+        image: db
+        container_name: db
+        build: ./requirements/db
+        restart: always
+        expose:
+            - "5432"                                # PostgreSQL 기본 포트
+        volumes:
+            - db_volume:/var/lib/postgresql/data
+        networks:
+            - intra
+        env_file:
+            - .env
+
+    # MySQL - 주문·알림 전용 DB (order / notification)
+    # order_service.md 및 notification_service.md 에서 MySQL 명시
+    mysql:
+        image: mysql:8.0
+        container_name: mysql
+        restart: always
+        expose:
+            - "3306"                                # MySQL 기본 포트
+        volumes:
+            - mysql_volume:/var/lib/mysql
+        networks:
+            - intra
+        env_file:
+            - .env
+
+    # Redis - 캐시/큐 (재고 원자 연산, 선착순 처리, Pub/Sub, 분산 락)
+    redis:
+        image: redis
+        container_name: redis
+        build: ./requirements/redis
+        restart: always
+        expose:
+            - "6379"                                # Redis 기본 포트
+        volumes:
+            - redis_volume:/data
+        networks:
+            - intra
+        env_file:
+            - .env
+
+    # ----------------------------------------------------------------------------------
+    # ■ FRONTEND
+    # ----------------------------------------------------------------------------------
+
+    # FRONTEND - 사용자 UI 서버
+    frontend:
+        image: frontend
+        container_name: frontend
+        build: ./requirements/frontend
+        depends_on:
+            - backend
+        restart: always
+        expose:
+            - "3000"
+        networks:
+            - intra
+        env_file:
+            - .env
+
+    # ----------------------------------------------------------------------------------
+    # ■ BACKEND - GraphQL / API Gateway
+    # ----------------------------------------------------------------------------------
+
+    # BACKEND - GraphQL API 서버 (선착순 처리, 지역 기반 탐색)
+    backend:
+        image: backend
+        container_name: backend
+        build: ./requirements/backend
+        depends_on:
+            - db
+            - redis
+        restart: always
+        expose:
+            - "8000"
+        volumes:
+            - static_volume:/var/www/static
+        networks:
+            - intra
+        env_file:
+            - .env
+
+    # ----------------------------------------------------------------------------------
+    # ■ MICROSERVICES - Spring Boot 마이크로서비스
+    # ----------------------------------------------------------------------------------
+
+    # ORDER - 주문 서비스 (담당: 남궁연제)
+    # 역할: 선착순 주문 처리, 재고 정합성 보장 (Redis DECRBY + MySQL)
+    # DB  : MySQL (ACID 트랜잭션 필수 - 결제·정산 연동)
+    # Port: 8080
+    order:
+        image: order
+        container_name: order
+        build: ./requirements/order
+        depends_on:
+            - mysql
+            - redis
+        restart: always
+        expose:
+            - "8080"
+        networks:
+            - intra
+        env_file:
+            - .env
+
+    # NOTIFICATION - 알림 서비스 / announce-service (담당: 남궁연제)
+    # 역할: 딜 성사·실패·마감임박·주문확인 이벤트 알림 (Redis Pub/Sub + SSE)
+    # DB  : MySQL (알림 발송 이력 영구 저장)
+    # Port: 8081
+    notification:
+        image: notification
+        container_name: notification
+        build: ./requirements/notification
+        depends_on:
+            - mysql
+            - redis
+        restart: always
+        expose:
+            - "8081"
+        networks:
+            - intra
+        env_file:
+            - .env
+
+    # TIMEDEAL - 타임딜 참여 서비스 (담당: 김민상)
+    # 역할: 공동구매 참여 처리, 선착순 인원 관리, 자동 마감 (Redis 분산 락)
+    # DB  : PostgreSQL
+    # Port: 8082
+    timedeal:
+        image: timedeal
+        container_name: timedeal
+        build: ./requirements/timedeal
+        depends_on:
+            - db
+            - redis
+        restart: always
+        expose:
+            - "8082"
+        networks:
+            - intra
+        env_file:
+            - .env
+
+    # CREATION - 딜 생성 서비스 (담당: 추형우)
+    # 역할: 공동구매 딜 최초 생성, 타입별 검증 (전략 패턴), 멱등성, DealCreatedEvent 발행
+    # DB  : PostgreSQL
+    # Port: 8083
+    creation:
+        image: creation
+        container_name: creation
+        build: ./requirements/creation
+        depends_on:
+            - db
+            - redis
+        restart: always
+        expose:
+            - "8083"
+        networks:
+            - intra
+        env_file:
+            - .env
+
+    # INTEGRATION - 딜 라이프사이클 서비스 (담당: 추형우)
+    # 역할: DealCreatedEvent 수신, metric 기준 마감 스케줄러, 성사/실패 판정 후 알림 트리거
+    # DB  : PostgreSQL (DealReadModel)
+    # Port: 8084
+    integration:
+        image: integration
+        container_name: integration
+        build: ./requirements/integration
+        depends_on:
+            - db
+            - redis
+            - order
+            - notification
+        restart: always
+        expose:
+            - "8084"
+        networks:
+            - intra
+        env_file:
+            - .env
+
+    # CATALOG - 딜 상세 조회 서비스 (담당: 김수연)
+    # 역할: 타임딜 상세 페이지 조회 (상품·판매자 fetch join + Redis 실시간 참여 인원)
+    # DB  : PostgreSQL
+    # Port: 8085
+    catalog:
+        image: catalog
+        container_name: catalog
+        build: ./requirements/catalog
+        depends_on:
+            - db
+            - redis
+        restart: always
+        expose:
+            - "8085"
+        networks:
+            - intra
+        env_file:
+            - .env
+
+    # USER - 유저 서비스 (담당: 최다울)
+    # 역할: 사용자 인증, 프로필, 동네 정보 관리
+    # DB  : PostgreSQL
+    # Port: 8086
+    user:
+        image: user
+        container_name: user
+        build: ./requirements/user
+        depends_on:
+            - db
+        restart: always
+        expose:
+            - "8086"
+        networks:
+            - intra
+        env_file:
+            - .env
+
+# ====================================================================================
+# NETWORKS
+# ====================================================================================
+networks:
+    intra:
+        driver: bridge                              # 브리지 방식 - 컨테이너끼리만 통신 가능
+
+# ====================================================================================
+# VOLUMES
+# ====================================================================================
+volumes:
+    db_volume:
+        name: db_volume
+        driver: local
+        driver_opts:
+            type: none
+            device: /home/time_deal/volume/db
+            o: bind
+
+    mysql_volume:
+        name: mysql_volume
+        driver: local
+        driver_opts:
+            type: none
+            device: /home/time_deal/volume/mysql
+            o: bind
+
+    redis_volume:
+        name: redis_volume
+        driver: local
+        driver_opts:
+            type: none
+            device: /home/time_deal/volume/redis
+            o: bind
+
+    static_volume:
+        name: static_volume
+        driver: local
+        driver_opts:
+            type: none
+            device: /home/time_deal/volume/static   # nginx, backend 공유
+            o: bind
