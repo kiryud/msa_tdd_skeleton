@@ -74,3 +74,50 @@ Then  : HTTP 409
         DB 주문 건수 변화 없음
         Redis 재고 5 유지
 ```
+
+---
+
+## 수량 제한 통합 검증
+
+### TC-M-08: 최소 수량 미달 시 DB·Redis 변경 없음
+```
+Given : dealId=1 (minQuantity=5), Redis 재고 10, DB 주문 없음
+        userId=1, quantity=3
+When  : POST /orders { userId:1, dealId:1, quantity:3 }
+Then  : HTTP 400
+        DB 주문 건수 변화 없음
+        Redis 재고 10 유지
+```
+
+### TC-M-09: 최대 수량 초과 시 DB·Redis 변경 없음
+```
+Given : dealId=1 (maxQuantity=2), Redis 재고 10, DB 주문 없음
+        userId=1, quantity=5
+When  : POST /orders { userId:1, dealId:1, quantity:5 }
+Then  : HTTP 400
+        DB 주문 건수 변화 없음
+        Redis 재고 10 유지
+```
+
+### TC-M-10: 수량 제한 딜 정상 주문 후 DB 저장 확인
+```
+Given : dealId=1 (minQuantity=2, maxQuantity=5), Redis 재고 10
+        userId=1, quantity=3
+When  : POST /orders { userId:1, dealId:1, quantity:3 }
+Then  : HTTP 200
+        orders 테이블에 레코드 1건 저장됨
+        저장된 status = CONFIRMED, quantity = 3
+        Redis 재고 = 7
+```
+
+### TC-M-11: Redis 수량 제한 캐시 miss 시 DB fallback 후 정상 처리
+```
+Given : dealId=1 (minQuantity=2, maxQuantity=5), Redis 캐시 없음(한도 정보 미적재)
+        MySQL deals 테이블에 해당 딜 정보 존재, Redis 재고 10
+        userId=1, quantity=3
+When  : POST /orders { userId:1, dealId:1, quantity:3 }
+Then  : HTTP 200
+        DB에서 수량 제한 조회 후 검증 통과
+        Redis 수량 제한 캐시 재적재됨
+        주문 CONFIRMED
+```

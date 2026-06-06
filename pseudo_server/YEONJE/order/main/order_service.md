@@ -27,12 +27,30 @@ orders
 - updated_at  : DateTime
 ```
 
+### MySQL - deals 테이블 (수량 제한 정보)
+```
+deals
+- id          : Long (PK)
+- min_quantity : Int (최소 주문 수량, 기본 1, nullable → null이면 제한 없음)
+- max_quantity : Int (최대 주문 수량, nullable → null이면 제한 없음)
+
+※ 핫딜/타임딜/공동구매 유형에 따라 min/max 값이 다르게 설정됨
+   예) 공동구매: minQuantity=5, maxQuantity=null (최소 수량 강제, 상한 없음)
+       타임딜:   minQuantity=1, maxQuantity=3    (1인당 최대 3개)
+       핫딜:     minQuantity=1, maxQuantity=1    (1인당 1개만)
+```
+
 ### Redis
 ```
 key   : "deal:{dealId}:stock"
 value : 잔여 재고 수량 (Int)
 연산  : DECRBY {quantity}  → 원자적 재고 감소
         INCRBY {quantity}  → 취소 시 재고 복구
+
+key   : "deal:{dealId}:limit"
+value : Hash { minQuantity: Int, maxQuantity: Int }
+연산  : HGETALL → 주문 생성 시 수량 제한 조회 (deals 테이블 캐싱)
+용도  : DB 조회 없이 수량 제한 빠르게 검증 (고트래픽 대비)
 ```
 
 ## API 명세
@@ -48,11 +66,14 @@ Request:
 
 처리 흐름:
 1. quantity 유효성 검증 (1 이상)
-2. 중복 주문 확인 (같은 userId + dealId 이미 존재 시 예외)
-3. Redis DECRBY quantity → 결과가 0 미만이면 INCRBY로 롤백 후 예외
-4. MySQL orders 테이블에 PENDING 상태로 저장
-5. 저장 성공 시 CONFIRMED 상태로 업데이트
-6. 응답 반환
+2. Redis에서 deal 수량 제한 조회 (deal:{dealId}:limit)
+   - minQuantity 존재 시: quantity < minQuantity 이면 예외
+   - maxQuantity 존재 시: quantity > maxQuantity 이면 예외
+3. 중복 주문 확인 (같은 userId + dealId 이미 존재 시 예외)
+4. Redis DECRBY quantity → 결과가 0 미만이면 INCRBY로 롤백 후 예외
+5. MySQL orders 테이블에 PENDING 상태로 저장
+6. 저장 성공 시 CONFIRMED 상태로 업데이트
+7. 응답 반환
 
 Response 200:
 {
@@ -63,6 +84,12 @@ Response 200:
 
 Response 400 - 수량 0 이하:
 { "error": "수량은 1 이상이어야 합니다" }
+
+Response 400 - 최소 주문 수량 미달:
+{ "error": "최소 주문 수량은 {minQuantity}개 이상이어야 합니다" }
+
+Response 400 - 최대 주문 수량 초과:
+{ "error": "최대 주문 수량은 {maxQuantity}개 이하이어야 합니다" }
 
 Response 409 - 재고 부족:
 { "error": "재고가 부족합니다" }
