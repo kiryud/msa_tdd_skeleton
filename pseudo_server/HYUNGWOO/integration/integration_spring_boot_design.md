@@ -2,6 +2,10 @@
 
 `integration.md`의 의사코드를 Spring Boot 계층/어노테이션으로 어디에 배치하는지 정리한 문서입니다. 통합 계층의 핵심은 **생성 이벤트 수신**, **metric 기준 마감 스케줄러**, **주문 서비스 집계 조회**입니다.
 
+## 인증 연동 (사용자 서비스)
+
+딜 관련 엔드포인트(참여/주문/생성)는 사용자 서비스가 발급한 토큰을 검증한 뒤 처리합니다. 인증 필터/인터셉터에서 토큰을 검증하고 `userId`와 동네 정보를 컨텍스트에 주입합니다. 토큰 형식(JWT vs Redis 세션)은 통합 시 단일화 결정이 필요하며, 세션 방식이면 검증 단계에서 Redis 세션을 조회합니다. 동네 비교가 필요한 경우 `baseLocation`을 `normalizeRegion`으로 `regionCode`로 변환해 사용합니다.
+
 ## 통합 계층 구조
 
 ```text
@@ -13,7 +17,8 @@ DealClosingScheduler(@Scheduled)
        -> getCurrentValue(metric별)
             HEADCOUNT -> RedisParticipantManager.count()
             QUANTITY/AMOUNT -> OrderAggregateClient.sum()
-       -> evaluateSuccess() -> DealStatusUpdater -> NotificationComponent
+       -> evaluateSuccess() -> DealStatusUpdater
+       -> collectParticipants(metric별) -> NotificationClient.sendDealResultNotification()
 ```
 
 ## 생성 이벤트 수신
@@ -29,7 +34,7 @@ class DealCreatedEventHandler(
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     fun onDealCreated(event: DealCreatedEvent) {
         dealReadModelRepository.save(DealReadModel.from(event))
-        if (event.metric == SuccessMetric.QUANTITY) {
+        if (event.successCriterion.metric == SuccessMetric.QUANTITY) {
             stockInitializer.init(event.dealId, event.capacity)
         }
     }
@@ -59,7 +64,8 @@ class DealLifecycleService(
     private val dealStatusUpdater: DealStatusUpdater,
     private val currentValueResolver: CurrentValueResolver,
     private val successEvaluator: SuccessEvaluator,
-    private val notification: NotificationComponent
+    private val participantCollector: ParticipantCollector,
+    private val notificationClient: NotificationClient
 ) {
     fun closeDeal(dealId: Long): DealStatus {
         val deal = dealReadModelRepository.findById(dealId)
@@ -69,19 +75,22 @@ class DealLifecycleService(
 
         val currentValue = currentValueResolver.resolve(deal)
         val result = successEvaluator.evaluate(SuccessCriterion(deal.metric, deal.min), currentValue)
+        val participantIds = participantCollector.collect(deal)
 
         return if (result == SuccessResult.SUCCESS) {
             dealStatusUpdater.update(dealId, DealStatus.SUCCESS)
-            notification.sendSuccess(dealId)
+            notificationClient.sendDealResultNotification(dealId, NotificationType.DEAL_SUCCESS, participantIds)
             DealStatus.SUCCESS
         } else {
             dealStatusUpdater.update(dealId, DealStatus.FAILED)
-            notification.sendFailed(dealId)
+            notificationClient.sendDealResultNotification(dealId, NotificationType.DEAL_FAILED, participantIds)
             DealStatus.FAILED
         }
     }
 }
 ```
+
+`ParticipantCollector`는 `metric`에 따라 참여자(HEADCOUNT는 참여 SET의 SMEMBERS, QUANTITY/AMOUNT는 주문 서비스의 딜 단위 주문자)를 모읍니다. 단, 주문 서비스의 딜 단위 주문자 조회는 현재 API에 없어 추가가 필요합니다.
 
 ## metric 전략 (순수 로직 분리)
 
