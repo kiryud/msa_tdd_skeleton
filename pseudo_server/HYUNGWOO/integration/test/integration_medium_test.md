@@ -56,3 +56,27 @@ Medium Test는 다른 인스턴스에 무언가를 **요청하는 경우**(DB/Re
 // When  - 주문 서비스가 onDealCreated로 이벤트를 처리한다.
 // Then  - deal:{dealId}:stock = 100으로 설정되어야 한다.
 ```
+
+## 테스트 7. 사용자 서비스가 발급한 토큰을 다른 서비스가 검증해 신원을 얻는다
+
+```text
+// Given - 사용자 서비스가 로그인 성공으로 세션 토큰을 발급해 Redis에 저장했다.
+// When  - 참여(또는 주문) 서비스가 그 토큰으로 신원 검증을 수행한다.
+// Then  - userId와 동네 정보가 정상 추출되어야 한다.
+// Given - 만료되었거나 위조된 토큰이 주어진다.
+// When  - 같은 검증을 수행한다.
+// Then  - 인증 실패로 거부되어야 한다.
+```
+
+> 토큰 형식(JWT/세션)은 통합 시 단일화가 필요하다. 세션 방식이면 이 검증은 Redis 조회(다른 인스턴스 I/O)이므로 Medium에 해당한다.
+
+## 테스트 8. 마감 확정이 알림 서비스로 참여자 전원 알림을 발송한다
+
+```text
+// Given - HEADCOUNT 딜이 성사(SUCCESS)로 마감되고 참여자 SET에 userId 3명이 있다.
+// When  - closeDeal이 collectParticipants로 3명을 모아 sendDealResultNotification(dealId, DEAL_SUCCESS, [3명])을 호출한다.
+// Then  - notifications 테이블에 3건이 저장되고, 각 userId의 notification:unread가 1씩 증가해야 한다.
+// Then  - 각 알림 type=DEAL_SUCCESS, title="공구가 성사되었습니다!"여야 한다.
+```
+
+> 수량/금액 딜의 동일 시나리오는 주문 서비스의 딜 단위 주문자 조회가 선행되어야 한다.
