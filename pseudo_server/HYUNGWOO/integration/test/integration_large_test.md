@@ -58,3 +58,24 @@ Large Test는 실제 API(POST, GET 등) 호출 이상의 크기로, 생성부터
 // Given - QUANTITY 딜에서 한 주문이 취소된다.
 // Then  - 재고가 취소 수량만큼 복구되고, 상세 진행도 current도 그만큼 감소해야 한다.
 ```
+
+## 테스트 6. 신원 통합: 로그인 → 토큰 → 딜 참여까지 userId·동네가 일관된다
+
+```text
+// Given - 사용자가 사용자 서비스에 로그인해 세션 토큰을 발급받았다.
+// When  - 그 토큰으로 동네 딜에 참여(또는 주문)를 요청한다.
+// Then  - 토큰의 userId로 참여가 기록되고, 동네(normalizeRegion 후 regionCode)가 딜 지역과 일치해 통과해야 한다.
+// Given - 토큰 없이(또는 만료 토큰으로) 같은 요청을 보낸다.
+// Then  - 인증 실패로 거부되고 참여/주문이 기록되지 않아야 한다.
+```
+
+## 테스트 7. 마감 결과 통합: 마감 성사 → 참여자 전원 알림 + unread 증가
+
+```text
+// Given - HEADCOUNT 딜이 마감 시점에 최소 인원을 충족한다(참여자 N명, 각 unread 초기값 보유).
+// When  - closeDeal이 SUCCESS를 확정하고 sendDealResultNotification(dealId, DEAL_SUCCESS, 참여자 N명)을 호출한다.
+// Then  - notifications 테이블에 N건이 저장되고, 참여자 N명의 notification:unread가 각각 1씩 증가해야 한다.
+// Then  - SSE 연결 중인 참여자는 DEAL_SUCCESS 알림을 실시간 수신해야 한다.
+// Given - 같은 딜이 최소 인원 미달로 마감되면
+// Then  - 참여자 전원에게 DEAL_FAILED 알림이 발송되어야 한다.
+```
