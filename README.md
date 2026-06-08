@@ -52,7 +52,7 @@ notification : 남궁연제
 |최다울|서비스 개발(설계, TDD)|user service|타임딜 공동구매 플랫폼|
 |윤혁주|Jira 관리|null|Book Bridge|
 |장찬범|Jira 관리|null|PayMap|
-|추형우|서비스 개발(설계, TDD)|deal creation|WaitQ|
+|추형우|서비스 개발(설계, TDD)|deal creation / integration|WaitQ|
 |이효원|발표 자료 제작, 프로젝트 문서화|null|medi care|
 
 
